@@ -86,6 +86,79 @@ check. All models are supervised fine-tuning only.
 
 ![task embedding ablation](assets/ple_ablation.png)
 
+## Quick start
+
+Download a model from Hugging Face and run a `rename` edit:
+
+```bash
+pip install -e . huggingface_hub safetensors
+```
+
+```python
+import json
+import torch
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+
+from src.model_config import ModelConfig
+from src.model_variants import TLM_S
+from src.tokenizer import TLM_Tokenizer
+from src.data_set import apply_sr
+from src.inference.generate import decode_rename_without_collision
+
+REPO = "omartra999/tlm-m-refactor"
+
+# load config, weights and tokenizer from the Hub
+cfg = json.load(open(hf_hub_download(REPO, "config.json")))
+config = ModelConfig(d_model=cfg["d_model"], d_ff=cfg["d_ff"],
+                     n_encoder_layers=cfg["n_encoder_layers"],
+                     n_decoder_layers=cfg["n_decoder_layers"])
+model = TLM_S(config)
+state = load_file(hf_hub_download(REPO, "model.safetensors"))
+state["output_head.weight"] = state["embedding.token_embedding.weight"]  # tied weights
+model.load_state_dict(state)
+model.eval()
+
+tokenizer = TLM_Tokenizer(vocab_size=config.vocab_size)
+tokenizer.load(hf_hub_download(REPO, "tokenizer.json"))
+
+code = '''def chk(s):
+    if len(s) < 8:
+        return False
+    return True
+'''
+
+# encoder input: <bos> <task token> code <eos>
+ids = config.special_token_ids
+before_ids = tokenizer.encode(code)
+enc_ids = [ids["bos"], ids["rename"]] + before_ids + [ids["eos"]]
+
+with torch.no_grad():
+    out = decode_rename_without_collision(model, enc_ids, cfg["task_ids"]["rename"], "cpu",
+                                          before_ids, tokenizer, config, collect_conf=False)
+
+# the model emits a SEARCH/REPLACE patch; apply it to the original code
+after_ids = apply_sr(before_ids, out["tokens"], config)
+print(tokenizer.decode(after_ids))
+```
+
+The model emits a SEARCH/REPLACE patch, which `apply_sr` applies to the
+original code. For the `chk` function above the result is:
+
+```python
+def is_valid_password(password):
+    if len(password) < 8:
+        return False
+    return True
+```
+
+(The tokenizer decodes without spaces around operators, so the raw output
+reads `len(password)<8`.)
+
+To use a different size, set `REPO` to `tlm-s-refactor` or `tlm-xs-refactor`.
+For the other four tasks, swap the task token and use `greedy_decode` from
+`src.inference.generate`.
+
 ## Repository layout
 
 ```
