@@ -17,7 +17,7 @@ Everything in this repository was written for this project: the model
 architecture, tokenizer, training pipeline, data generation, evaluation
 scorers, and a CodeT5 baseline for comparison.
 
-**Weights:** Hugging Face (link to be added)
+**Weights (Hugging Face):** [TLM-XS](https://huggingface.co/omartra999/tlm-xs-refactor) · [TLM-S](https://huggingface.co/omartra999/tlm-s-refactor) · [TLM-M](https://huggingface.co/omartra999/tlm-m-refactor)
 
 ## Why it is interesting
 
@@ -49,7 +49,7 @@ scorers, and a CodeT5 baseline for comparison.
 
 | Model | d_model | Layers (enc+dec) | Parameters |
 |-------|---------|------------------|-----------|
-| TLM-XS | 128 | 3+3 | 3.13M |
+| TLM-XS | 128 | 4+4 | 3.13M |
 | TLM-S | 192 | 4+4 | 6.07M |
 | TLM-M | 256 | 4+4 | 9.93M |
 
