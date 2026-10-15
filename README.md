@@ -5,6 +5,9 @@ pretrained weights, under 10M parameters)**, that rewrites Python code. Give it
 a function and a task, and it returns the edit as a SEARCH/REPLACE block that
 can be applied to the source automatically.
 
+This project was developed as my Bachelor's thesis at the University of
+Duisburg-Essen.
+
 | Task | What it does |
 |------|--------------|
 | `rename` | Renames an identifier consistently across every use site |
